@@ -63,6 +63,10 @@ export function resolveLocale(code: string): string | null {
 
 export function setupI18n() {
     const htmlLang = document.querySelector('html')!.getAttribute('lang')
+    
+    // Capture the true browser regional format (e.g., 'en-CA', 'en-GB') before matching translations
+    const browserRawLang = navigator.language || (navigator.languages && navigator.languages[0]) || htmlLang || 'en-US'
+    
     let locale = htmlLang ? resolveLocale(htmlLang) : null
     if (!locale) {
         if (htmlLang && htmlLang !== 'en') {
@@ -88,7 +92,7 @@ export function setupI18n() {
     })
 
     // async load user locale into existing i18n instance
-    loadLocaleMessages(i18n, locale).catch(console.error)
+    loadLocaleMessages(i18n, locale, browserRawLang).catch(console.error)
 
     return i18n
 }
@@ -98,7 +102,7 @@ export function setupI18n() {
  * @param i18n instance of Vue i18n
  * @param locale string locale code to set (should be in SUPPORT_LOCALES)
  */
-export async function loadLocaleMessages(i18n: I18n, locale: Locale) {
+export async function loadLocaleMessages(i18n: I18n, locale: Locale, exactRegionalLocale?: string) {
     // load locale messages, clone to avoid mutating the imported module object
     let messages = {...en}
     if (locale != 'en') {
@@ -138,7 +142,7 @@ export async function loadLocaleMessages(i18n: I18n, locale: Locale) {
     })
 
     // switch to given locale
-    setLocale(i18n, locale)
+    setLocale(i18n, locale, exactRegionalLocale)
 }
 
 /**
@@ -146,8 +150,8 @@ export async function loadLocaleMessages(i18n: I18n, locale: Locale) {
  * @param i18n instance of Vue i18n
  * @param locale string locale code to set (should be in SUPPORT_LOCALES)
  */
-export function setLocale(i18n: I18n, locale: Locale): void {
+export function setLocale(i18n: I18n, locale: Locale, exactRegionalLocale?: string): void {
     i18n.global.locale = locale
     // set luxon locale
-    Settings.defaultLocale = locale
+    Settings.defaultLocale = exactRegionalLocale || locale;
 }
